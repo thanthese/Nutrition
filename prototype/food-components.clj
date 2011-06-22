@@ -53,3 +53,9 @@
 
 ; demostrate the hash
 (println (create-table FOOD_DES-keys (get-all-lines "../food-components/FOOD_DES.txt")))
+
+; slurp normal file size
+(take 1 (str/split (slurp "../food-components/FOOD_DES.txt") #"\n"))
+
+; slurp giant file size
+(last (str/split (slurp "../food-components/NUT_DATA.txt") #"\n"))
