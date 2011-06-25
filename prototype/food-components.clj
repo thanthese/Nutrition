@@ -14,7 +14,8 @@
 ;
 
 (ns food-components
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str])
+  (:use [clojure.pprint :only (pprint)]))
 
 (def FOOD_DES-definition
   {:path "../food-components/FOOD_DES.txt"
@@ -63,25 +64,11 @@
 ; contains in-memory tables
 (def tables {:food-description (load-table FOOD_DES-definition)})
 
-(defn show
-  "Pretty-print collection, one line per element."
-  [col]
-  (do
-    (doseq [c col] (println " " c))
-    (println)))
-
 (defn has?
   "Return whether the first string contains the second.  Ignores case."
   [super sub]
   (.contains (str/lower-case super)
              (str/lower-case sub)))
-
-(defn search
-  "Return all rows in the table where the field contains the term."
-  [table field term]
-  (filter (fn [row]
-            (has? (field row) term))
-          table))
 
 (defn extract
   "Return field values for each row in table."
@@ -89,7 +76,6 @@
   (map (apply juxt fields) table))
 
 ; example search, plus filtered results
-(show (extract [:NDB_No :Long_Desc]
-               (search (:food-description tables)
-                       :Long_Desc
-                       "carrot")))
+(pprint (extract [:NDB_No :Shrt_Desc]
+                 (filter #(has? (:Long_Desc %) "carrot")
+                         (:food-description tables))))
