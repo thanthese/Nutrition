@@ -8,6 +8,10 @@
 ;
 ;   $> java -server -jar <path-to-clojure.jar> food-components.clj
 ;
+; To load this file in the REPL:
+;
+;   $> (load-file "food-components.clj") (ns food-components)
+;
 
 (ns food-components
   (:require [clojure.string :as str]))
@@ -37,21 +41,55 @@
     (subs text 1 (dec (count text)))
     text))
 
-(defn split-row [row]
+(defn split-row
+  "Split a rows from the raw datasets into a vector of fields."
+  [row]
   (map strip-tildes (str/split row #"\^")))
 
-(defn get-lines [path]
+(defn get-lines
+  "Return lines from given file as vector of strings."
+  [path]
   (str/split (slurp path) #"\n"))
 
-(defn load-table [{:keys [path schema] :as table-definition}]
+(defn load-table
+  "Convert a table definition (path to file, fields) into an in-memory table
+  object (list of maps)."
+  [{:keys [path schema] :as table-definition}]
   (let [rows (get-lines path)
         col-names (map (comp keyword :field-name) schema)]
     (map #(zipmap col-names (split-row %))
          rows)))
 
-(defn show [col]
+; contains in-memory tables
+(def tables {:food-description (load-table FOOD_DES-definition)})
+
+(defn show
+  "Pretty-print collection, one line per element."
+  [col]
   (do
     (doseq [c col] (println " " c))
     (println)))
 
-(show (sort-by count (map :Long_Desc (load-table FOOD_DES-definition))))
+(defn has?
+  "Return whether the first string contains the second.  Ignores case."
+  [super sub]
+  (.contains (str/lower-case super)
+             (str/lower-case sub)))
+
+(defn search
+  "Return all rows in the table where the field contains the term."
+  [table field term]
+  (filter (fn [row]
+            (has? (field row) term))
+          table))
+
+(defn extract
+  "Return field values for each row in table."
+  [fields table]
+  (map (apply juxt fields) table))
+
+; example search, plus filtered results
+(show (extract [:NDB_No :Long_Desc]
+               (search (:food-description tables)
+                       :Long_Desc
+                       "carrot")))
