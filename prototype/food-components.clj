@@ -64,12 +64,6 @@
 ; contains in-memory tables
 (def tables {:food-description (load-table FOOD_DES-definition)})
 
-(defn has?
-  "Return whether the first string contains the second.  Ignores case."
-  [super sub]
-  (.contains (str/lower-case super)
-             (str/lower-case sub)))
-
 (defn extract
   "Return field values for each row in table."
   [fields table]
@@ -77,5 +71,5 @@
 
 ; example search, plus filtered results
 (pprint (extract [:NDB_No :Shrt_Desc]
-                 (filter #(has? (:Long_Desc %) "carrot")
+                 (filter #(re-find #"(?i)carrot" (:Long_Desc %))
                          (:food-description tables))))
