@@ -37,10 +37,10 @@
 (defn strip-tildes
   "Strip surrounding tildes from Text, if a pair exists."
   [text]
-  (if (and (= \~ (first text))
-           (= \~ (last text)))
-    (subs text 1 (dec (count text)))
-    text))
+  (let [match (re-find #"~(.*)~" text)]
+    (if match
+      (second match)
+      text)))
 
 (defn split-row
   "Split a rows from the raw datasets into a vector of fields."
