@@ -37,10 +37,9 @@
 (defn strip-tildes
   "Strip surrounding tildes from Text, if a pair exists."
   [text]
-  (let [match (re-find #"~(.*)~" text)]
-    (if match
-      (second match)
-      text)))
+  (if-let [match (re-find #"~(.*)~" text)]
+    (second match)
+    text))
 
 (defn split-row
   "Split a rows from the raw datasets into a vector of fields."
@@ -61,7 +60,7 @@
     (map #(zipmap col-names (split-row %))
          rows)))
 
-; contains in-memory tables
+; in-memory tables
 (def tables {:food-description (load-table FOOD_DES-definition)})
 
 (defn extract
