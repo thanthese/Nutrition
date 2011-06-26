@@ -1,24 +1,12 @@
 ;;
-; Stephen Mann
-; 20 June 2011
-;
-; First stab at parsing raw food-component data.
-;
-; Requires clojure 1.2.  Run with:
-;
-;   $> java -server -jar <path-to-clojure.jar> food-components.clj
-;
-; To load this file in the REPL:
-;
-;   $> (load-file "food-components.clj") (ns food-components)
+; Load food-components data from files and provide manipulation methods.
 ;
 
-(ns food-components
-  (:require [clojure.string :as str])
-  (:use [clojure.pprint :only (pprint)]))
+(ns nutrition.food-components
+  (:require [clojure.string :as str]))
 
 (def FOOD_DES-definition
-  {:path "../food-components/FOOD_DES.txt"
+  {:path "resources/food-components/FOOD_DES.txt"
    :schema [{ :field-name "NDB_No"      :type "A" :primary? true  :length 5   :precision 0 :blank "N" :description "5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost. "}
             { :field-name "FdGrp_Cd"    :type "A" :primary? false :length 4   :precision 0 :blank "N" :description "4-digit code indicating food group to which a food item belongs. "}
             { :field-name "Long_Desc"   :type "A" :primary? false :length 200 :precision 0 :blank "N" :description "200-character description of food item. "}
@@ -60,15 +48,13 @@
     (map #(zipmap col-names (split-row %))
          rows)))
 
-; in-memory tables
-(def tables {:food-description (load-table FOOD_DES-definition)})
+(defn generate-tables
+  "Generate map of all tables -- basically return an object containing the
+  entire food-component database.  Expensive operation."
+  []
+  {:food-description (load-table FOOD_DES-definition)})
 
 (defn extract
   "Return field values for each row in table."
   [fields table]
   (map (apply juxt fields) table))
-
-; example search, plus filtered results
-(pprint (extract [:NDB_No :Shrt_Desc]
-                 (filter #(re-find #"(?i)carrot" (:Long_Desc %))
-                         (:food-description tables))))
