@@ -4,7 +4,9 @@ Given natural, physiological, and currently-stocked-kitchen constraints, help th
 
 ## Usage
 
-We'll let you know
+[Leiningen](https://github.com/technomancy/leiningen) is required.
+
+    lein run
 
 ## Authors
 
