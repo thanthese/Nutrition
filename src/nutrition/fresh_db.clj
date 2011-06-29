@@ -110,6 +110,22 @@
              { :field-name "Start_Page"  :type "A" :primary? false :length "5"   :precision 0 :blank "Y" :description "Starting page number of article/document. "}
              { :field-name "End_Page"    :type "A" :primary? false :length "5"   :precision 0 :blank "Y" :description "Ending page number of article/document. "}]}])
 
+(defn drop-table [table-name]
+  (sql/with-connection
+    db (try
+         (sql/drop-table table-name)
+         (catch Exception _
+           (println " WARN: No table, cannot drop" table-name)))))
+
+(defn drop-tables [table-definitions]
+  (doseq [table-name (map :table-name table-definitions)]
+    (drop-table table-name)))
+
+(defn refresh-database []
+  (drop-tables table-definitions))
+
+; (refresh-database)
+
 
 ; example: create-table
 (sql/with-connection
@@ -117,12 +133,6 @@
        :blogs
        [:id :int]
        [:title "varchar(255)"]))
-
-; example: drop-table
-(sql/with-connection
-  db (try
-       (sql/drop-table :blogs)
-       (catch Exception _)))
 
 ; example: complex-ish cql select
 @(-> (q/table db :blogs)
