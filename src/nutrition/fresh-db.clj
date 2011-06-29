@@ -4,6 +4,7 @@
 
 (ns nutrition.fresh-db
   (:require [clojure.string :as str])
+  (:require [clojureql.core :as q])
   (:require [clojure.contrib.sql :as sql]))
 
 (def db {:classname "org.postgresql.Driver"
@@ -14,34 +15,25 @@
 
 ; example: create-table
 (sql/with-connection
-  db
-  (sql/transaction
-    (sql/create-table
-      :blogs
-      [:id :int]
-      [:title "varchar(255)"])))
+  db (sql/create-table
+       :blogs
+       [:id :int]
+       [:title "varchar(255)"]))
 
 ; example: drop-table
 (sql/with-connection
-  db
-  (sql/transaction
-    (try
-      (sql/drop-table :blogs)
-      (catch Exception _))))
+  db (try
+       (sql/drop-table :blogs)
+       (catch Exception _)))
 
-; example: select
-(sql/with-connection db
-   (sql/with-query-results rs ["select * from blogs"]
-     (dorun (map #(println (:id %) (:title %)) rs))))
+; example: complex-ish cql select
+@(-> (q/table db :blogs)
+   (q/select (q/where (> :id 5)))
+   (q/project [:id :as "myid"]))
 
-; example: insert
-(sql/with-connection
-  db
-  (sql/transaction
-    (sql/insert-rows
-      :blogs
-      [6 "crazy title"])))
-
+; example: complex-ish cql insert
+@(-> (q/table db :blogs)
+   (q/conj! {:id 42}))
 
 (def table-definitions
   [{:table-name :food-description
