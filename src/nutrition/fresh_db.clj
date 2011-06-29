@@ -122,26 +122,52 @@
     (drop-table table-name)))
 
 (defn refresh-database []
-  (drop-tables table-definitions))
+  (do
+    (drop-tables table-definitions)
+    (create-tables table-definitions)))
 
-; (refresh-database)
+(defn alphanumeric-field? [field]
+  (= (:type field) "A"))
+
+(defn integer-field? [field]
+  (and (= (:type field) "N")
+       (= (:precision field) 0)))
+
+(defn decimal-field? [field]
+  (and (= (:type field) "N")
+       (> (:precision field) 0)))
 
 
-; example: create-table
+
+
+(defn create-table [table-definition]
+  (sql/with-connection
+    db
+    (apply (partial sql/create-table (:table-name table-definition))
+           (map (fn [field]
+                  [(keyword (:field-name field))
+                   (cond (integer-field? field) :int
+                         (alphanumeric-field? field) (str "varchar(" (:length field) ")")
+                         (decimal-field? field)
+                         (str "decimal(" (:length field)
+                              ", " (:precision field) ")"))])
+                (:schema table-definition)))))
+
 (sql/with-connection
   db (sql/create-table
        :blogs
-       [:id :int]
-       [:title "varchar(255)"]))
+       [:id :int "primary key"]
+       [:title "varchar(255)" "primary key"]))
 
-; example: complex-ish cql select
-@(-> (q/table db :blogs)
-   (q/select (q/where (> :id 5)))
-   (q/project [:id :as "myid"]))
 
-; example: complex-ish cql insert
-@(-> (q/table db :blogs)
-   (q/conj! {:id 42}))
+; ; example: complex-ish cql select
+; @(-> (q/table db :blogs)
+;    (q/select (q/where (> :id 5)))
+;    (q/project [:id :as "myid"]))
+;
+; ; example: complex-ish cql insert
+; @(-> (q/table db :blogs)
+;    (q/conj! {:id 42}))
 
 (defn strip-tildes
   "Strip surrounding tildes from Text, if a pair exists."
