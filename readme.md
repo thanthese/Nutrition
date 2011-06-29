@@ -4,14 +4,18 @@ Given natural, physiological, and currently-stocked-kitchen constraints, help th
 
 ## Usage
 
-[Leiningen](https://github.com/technomancy/leiningen) is required.
+Required: [Postgresql 8.4](http://www.postgresql.org/)
 
-    lein run
+    $> createdb nutrition
+    $> createuser --pwprompt test  # make password "test"
+
+Required: [Leiningen](https://github.com/technomancy/leiningen)
+
+    $> lein run
 
 ## Authors
 
 - Stephen Mann
-- Adam Colton
 
 ## License
 
