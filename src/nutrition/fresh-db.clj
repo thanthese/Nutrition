@@ -4,7 +4,7 @@
 
 (ns nutrition.fresh-db
   (:require [clojure.string :as str])
-  (:require [clojure.java.jdbc :as sql]))
+  (:require [clojure.contrib.sql :as sql]))
 
 (def db {:classname "org.postgresql.Driver"
          :subprotocol "postgresql"
@@ -18,8 +18,7 @@
   (sql/transaction
     (sql/create-table
       :blogs
-      [:id  "varchar(255)"]
-      ;[:id :int ]
+      [:id :int]
       [:title "varchar(255)"])))
 
 ; example: drop-table
@@ -32,16 +31,17 @@
 
 ; example: select
 (sql/with-connection db
-   (sql/with-query-results rs ["select * from test"]
-     (dorun (map #(println (:id %) (:a %) (:b %)) rs))))
+   (sql/with-query-results rs ["select * from blogs"]
+     (dorun (map #(println (:id %) (:title %)) rs))))
 
-; broken example: insert
+; example: insert
 (sql/with-connection
   db
   (sql/transaction
     (sql/insert-rows
-      "Nutrition.blogs"
-      [4 "crazy title"])))
+      :blogs
+      [6 "crazy title"])))
+
 
 (def table-definitions
   [{:table-name :food-description
