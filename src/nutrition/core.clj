@@ -1,5 +1,6 @@
 (ns nutrition.core
   (:require [nutrition.food-components :as fc])
+  (:require [nutrition.fresh-db :as db])
   (:use [clojure.pprint :only (pprint)])
   (:gen-class))
 
