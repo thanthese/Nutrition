@@ -137,9 +137,6 @@
   (and (= (:type field) "N")
        (> (:precision field) 0)))
 
-
-
-
 (defn create-table [table-definition]
   (sql/with-connection
     db
@@ -153,12 +150,20 @@
                               ", " (:precision field) ")"))])
                 (:schema table-definition)))))
 
+(str "(" (apply str (interpose ", " (map :field-name (filter :primary? (:schema (second table-definitions)))))) ")")
+
+(defn get-primary-field-names [table-definition]
+  (map :field-name (filter :primary? (:schema table-definition))))
+
+(get-primary-field-names (second table-definitions))
+
+(drop-table :blogs)
 (sql/with-connection
   db (sql/create-table
        :blogs
-       [:id :int "primary key"]
-       [:title "varchar(255)" "primary key"]))
-
+       [:id :int]
+       [:title "varchar(255)"]
+       ["PRIMARY KEY" "(id, title)"]))
 
 ; ; example: complex-ish cql select
 ; @(-> (q/table db :blogs)
