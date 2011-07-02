@@ -184,20 +184,35 @@
 ; @(-> (q/table db :blogs)
 ;    (q/conj! {:id 42}))
 
+(defn string->num [f s]
+  (if (str/blank? s)
+    0
+    (f s)))
+
+(defn string->int [s]
+  (string->num #(Integer/parseInt %) s))
+
+(defn string->double [s]
+  (string->num #(Double/parseDouble %) s))
+
 (defn strip-tildes [text]
   (if-let [match (re-find #"~(.*)~" text)]
     (last match)
     text))
 
 (defn split-into-fields [line]
-  (let [clean (str/replace line "\r" "")]
-    (map strip-tildes (str/split clean #"\^"))))
+  (map strip-tildes
+       (-> line
+         (str/replace "\r" "")
+         (str/split #"\^"))))
 
 (defn get-lines [path]
-  (str/split (slurp path) #"\n"))
+  (-> (slurp path)
+    (str/split #"\n")))
 
 (defn get-field [field-name table-definition]
-  (first (filter #(= field-name (keyword (:field-name %)))
+  (first (filter #(= field-name
+                     (keyword (:field-name %)))
     (:schema table-definition))))
 
 (defn build-row [table-definition line]
@@ -211,19 +226,6 @@
                         (alphanu-field? field) v
                         (decimal-field? field) (string->double v))]))
                (zipmap cols vals)))))
-
-(defn string->int [s]
-  (string->num :int s))
-
-(defn string->double [s]
-  (string->num :double s))
-
-(defn string->num [t s]
-  (if (str/blank? s)
-    0
-    (case t
-      :int (Integer/parseInt s)
-      :double (Double/parseDouble s))))
 
 (defn load-table
   "Convert a table definition (path to file, fields) into an in-memory table
