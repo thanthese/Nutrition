@@ -9,7 +9,7 @@
 
 (def db {:classname "org.postgresql.Driver"
          :subprotocol "postgresql"
-         :subname (str "//localhost:5432/nutrition")
+         :subname "//localhost:5432/nutrition"
          :user "test"
          :password "test"})
 
@@ -110,23 +110,7 @@
              { :field-name "Start_Page"  :type "A" :primary? false :length "5"   :precision 0 :blank "Y" :description "Starting page number of article/document. "}
              { :field-name "End_Page"    :type "A" :primary? false :length "5"   :precision 0 :blank "Y" :description "Ending page number of article/document. "}]}])
 
-(defn drop-table [table-name]
-  (sql/with-connection
-    db (try
-         (sql/drop-table table-name)
-         (catch Exception _
-           (println " WARN: No table, cannot drop" table-name)))))
-
-(defn drop-tables [table-definitions]
-  (doseq [table-name (map :table-name table-definitions)]
-    (drop-table table-name)))
-
-(defn refresh-database []
-  (do
-    (drop-tables table-definitions)
-    (create-tables table-definitions)))
-
-(defn alphanumeric-field? [field]
+(defn alphanu-field? [field]
   (= (:type field) "A"))
 
 (defn integer-field? [field]
@@ -137,33 +121,59 @@
   (and (= (:type field) "N")
        (> (:precision field) 0)))
 
+(defn pkey-fieldnames [table-definition]
+  (->> (:schema table-definition)
+    (filter :primary?)
+    (map :field-name)))
+
+(defn sql-field-def [field]
+  (let [name (:field-name field)
+        type (cond (integer-field? field) "integer"
+                   (alphanu-field? field) (format "varchar(%s)" (:length field))
+                   (decimal-field? field) (format "decimal(%s, %s)"
+                                                  (:length field)
+                                                  (:precision field)))]
+    [name type]))
+
+(defn pkeys-def [pkeys]
+  ["PRIMARY KEY"
+   (format "(%s)"
+           (apply str (interpose ", " pkeys)))])
+
+(defn fields+contraints [table-definition]
+  (let [fields (map sql-field-def (:schema table-definition))
+        pkeys (pkey-fieldnames table-definition)]
+    (if (empty? pkeys )
+      fields
+      (let [contraints (pkeys-def pkeys)]
+        (conj fields contraints)))))
+
+(defn drop-table [table-definition]
+  (let [table-name (:table-name table-definition)]
+    (sql/with-connection
+      db (try
+           (sql/drop-table table-name)
+           (catch Exception _
+             (println " WARN: No table, cannot drop" table-name))))))
+
 (defn create-table [table-definition]
   (sql/with-connection
     db
     (apply (partial sql/create-table (:table-name table-definition))
-           (map (fn [field]
-                  [(keyword (:field-name field))
-                   (cond (integer-field? field) :int
-                         (alphanumeric-field? field) (str "varchar(" (:length field) ")")
-                         (decimal-field? field)
-                         (str "decimal(" (:length field)
-                              ", " (:precision field) ")"))])
-                (:schema table-definition)))))
+           (fields+contraints table-definition))))
 
-(str "(" (apply str (interpose ", " (map :field-name (filter :primary? (:schema (second table-definitions)))))) ")")
+(defn drop-tables [table-definitions]
+  (doseq [table-def table-definitions]
+    (drop-table table-def)))
 
-(defn get-primary-field-names [table-definition]
-  (map :field-name (filter :primary? (:schema table-definition))))
+(defn create-tables [table-definitions]
+  (doseq [table-def table-definitions]
+    (create-table table-def)))
 
-(get-primary-field-names (second table-definitions))
-
-(drop-table :blogs)
-(sql/with-connection
-  db (sql/create-table
-       :blogs
-       [:id :int]
-       [:title "varchar(255)"]
-       ["PRIMARY KEY" "(id, title)"]))
+(defn refresh-database []
+  (do
+    (drop-tables table-definitions)
+    (create-tables table-definitions)))
 
 ; ; example: complex-ish cql select
 ; @(-> (q/table db :blogs)
@@ -174,21 +184,15 @@
 ; @(-> (q/table db :blogs)
 ;    (q/conj! {:id 42}))
 
-(defn strip-tildes
-  "Strip surrounding tildes from Text, if a pair exists."
-  [text]
+(defn strip-tildes [text]
   (if-let [match (re-find #"~(.*)~" text)]
-    (second match)
+    (last match)
     text))
 
-(defn split-row
-  "Split a rows from the raw datasets into a vector of fields."
-  [row]
+(defn split-row [row]
   (map strip-tildes (str/split row #"\^")))
 
-(defn get-lines
-  "Return lines from given file as vector of strings."
-  [path]
+(defn get-lines [path]
   (str/split (slurp path) #"\n"))
 
 (defn load-table

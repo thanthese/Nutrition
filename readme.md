@@ -13,10 +13,6 @@ Required: [Leiningen](https://github.com/technomancy/leiningen)
 
     $> lein run
 
-## Authors
-
-- Stephen Mann
-
 ## License
 
 Copyright (C) 2011 thanthese productions
