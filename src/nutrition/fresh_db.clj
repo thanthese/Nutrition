@@ -189,32 +189,53 @@
     (last match)
     text))
 
-(defn split-row [row]
-  (map strip-tildes (str/split row #"\^")))
+(defn split-into-fields [line]
+  (let [clean (str/replace line "\r" "")]
+    (map strip-tildes (str/split clean #"\^"))))
 
 (defn get-lines [path]
   (str/split (slurp path) #"\n"))
 
+(defn get-field [field-name table-definition]
+  (first (filter #(= field-name (keyword (:field-name %)))
+    (:schema table-definition))))
+
+(defn build-row [table-definition line]
+  (let [cols (map (comp keyword :field-name) (:schema table-definition))
+        vals (split-into-fields line) ]
+    (into {} (map
+               (fn [[k v]]
+                 (let [field (get-field k table-definition)]
+                   [k (cond
+                        (integer-field? field) (string->int v)
+                        (alphanu-field? field) v
+                        (decimal-field? field) (string->double v))]))
+               (zipmap cols vals)))))
+
+(defn string->int [s]
+  (string->num :int s))
+
+(defn string->double [s]
+  (string->num :double s))
+
+(defn string->num [t s]
+  (if (str/blank? s)
+    0
+    (case t
+      :int (Integer/parseInt s)
+      :double (Double/parseDouble s))))
+
 (defn load-table
   "Convert a table definition (path to file, fields) into an in-memory table
   object (list of maps)."
-  [{:keys [path schema] :as table-definition}]
-  (let [rows (get-lines path)
-        col-names (map (comp keyword :field-name) schema)]
-    (map #(zipmap col-names (split-row %))
-         rows)))
+  [table-definition]
+  (map (partial build-row table-definition)
+       (get-lines (:path table-definition))))
 
-(defn generate-tables
-  "Load all tables into memory as a map: table name to list of rows.  Expensive
-  operation."
-  []
-  (into {}
-        (map (fn [td]
-               [(:table-name td)
-                (load-table td)])
-             table-definitions)))
+(defn populate-table [table-definition]
+  (let [rows (load-table table-definition)]
+    (-> (q/table db (:table-name table-definition))
+      (q/conj! rows))))
 
-(defn extract
-  "Return field values for each row in table."
-  [fields table]
-  (map (apply juxt fields) table))
+(refresh-database)
+(time (populate-table (first table-definitions)))
