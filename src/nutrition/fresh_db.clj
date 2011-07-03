@@ -165,9 +165,8 @@
 
 (defn create-table [table-definition]
   (sql/with-connection
-    db
-    (apply (partial sql/create-table (:table-name table-definition))
-           (fields+contraints-def table-definition))))
+    db (apply (partial sql/create-table (:table-name table-definition))
+              (fields+contraints-def table-definition))))
 
 (defn drop-tables [table-definitions]
   (doseq [table-def table-definitions]
@@ -216,10 +215,6 @@
   (-> (slurp path)
     (str/split #"\n")))
 
-(defn column-names [table-definition]
-  (map (comp keyword :field-name)
-       (:schema table-definition)))
-
 (defn load-row-values [table-definition]
   (let [fns (cast-fns table-definition)]
     (map (fn [line]
@@ -230,11 +225,9 @@
 
 (defn populate-table [table-definition]
   (clojure.contrib.sql/with-connection
-    db (clojure.contrib.sql/transaction
-         (let [cols (column-names table-definition)]
-           (doseq [row-values (load-row-values table-definition)]
-             (clojure.contrib.sql/insert-values
-               (:table-name table-definition) cols row-values))))))
+    db (count (apply (partial clojure.contrib.sql/insert-rows
+                              (:table-name table-definition))
+                     (load-row-values table-definition)))))
 
 (defn populate-tables [table-definitions]
   (doseq [table-def table-definitions]
