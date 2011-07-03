@@ -1,11 +1,16 @@
 ;;
 ; Wipe and recreate fresh nutrition database.
 ;
+; Refresh database with:
+;
+;   $> lein run -m nutrition.fresh-db
+;
 
 (ns nutrition.fresh-db
   (:require [clojure.string :as str])
   (:require [clojureql.core :as q])
-  (:require [clojure.contrib.sql :as sql]))
+  (:require [clojure.contrib.sql :as sql])
+  (:gen-class))
 
 (def db {:classname "org.postgresql.Driver"
          :subprotocol "postgresql"
@@ -55,7 +60,8 @@
              { :field-name "FdGrp_Desc" :type "A" :primary? false :length "60" :precision 0 :blank "N" :description "Name of food group. "}]}
    {:table-name :langual_factor
     :path "resources/food-components/LANGUAL.txt"
-    :schema [{ :field-name "NDB_No"      :type "A" :primary? true  :length "5" :precision 0 :blank "N" :description "5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost. "}
+    ; removed primary key status because field value repeats -- pdf spec was wrong
+    :schema [{ :field-name "NDB_No"      :type "A" :primary? false  :length "5" :precision 0 :blank "N" :description "5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost. "}
              { :field-name "Factor_Code" :type "A" :primary? false :length "5" :precision 0 :blank "N" :description "The LanguaL factor from the Thesaurus "}]}
    {:table-name :langual_description
     :path "resources/food-components/LANGDESC.txt"
@@ -84,7 +90,8 @@
              { :field-name "Amount"       :type "N" :primary? false :length "5"  :precision 3 :blank "N" :description "Unit modifier (for example, 1 in “1 cup”). "}
              { :field-name "Msre_Desc"    :type "A" :primary? false :length "80" :precision 0 :blank "N" :description "Description (for example, cup, diced, and 1-inch pieces). "}
              { :field-name "Gm_Wgt"       :type "N" :primary? false :length "7"  :precision 1 :blank "N" :description "Gram weight. "}
-             { :field-name "Num_Data_Pts" :type "N" :primary? false :length "3"  :precision 0 :blank "Y" :description "Number of data points. "}
+             ; upped length and precision to reflect data
+             { :field-name "Num_Data_Pts" :type "N" :primary? false :length "4"  :precision 1 :blank "Y" :description "Number of data points. "}
              { :field-name "Std_Dev"      :type "N" :primary? false :length "7"  :precision 3 :blank "Y" :description "Standard deviation. "}]}
    {:table-name :footnote
     :path "resources/food-components/FOOTNOTE.txt"
@@ -140,7 +147,7 @@
    (format "(%s)"
            (apply str (interpose ", " pkeys)))])
 
-(defn fields+contraints [table-definition]
+(defn fields+contraints-def [table-definition]
   (let [fields (map sql-field-def (:schema table-definition))
         pkeys (pkey-fieldnames table-definition)]
     (if (empty? pkeys )
@@ -160,7 +167,7 @@
   (sql/with-connection
     db
     (apply (partial sql/create-table (:table-name table-definition))
-           (fields+contraints table-definition))))
+           (fields+contraints-def table-definition))))
 
 (defn drop-tables [table-definitions]
   (doseq [table-def table-definitions]
@@ -170,30 +177,28 @@
   (doseq [table-def table-definitions]
     (create-table table-def)))
 
-(defn refresh-database []
-  (do
-    (drop-tables table-definitions)
-    (create-tables table-definitions)))
-
 ; ; example: complex-ish cql select
 ; @(-> (q/table db :blogs)
 ;    (q/select (q/where (> :id 5)))
 ;    (q/project [:id :as "myid"]))
-;
-; ; example: complex-ish cql insert
-; @(-> (q/table db :blogs)
-;    (q/conj! {:id 42}))
 
 (defn string->num [f s]
   (if (str/blank? s)
     0
-    (f s)))
+    (f (str/trim s))))
 
 (defn string->int [s]
   (string->num #(Integer/parseInt %) s))
 
 (defn string->double [s]
   (string->num #(Double/parseDouble %) s))
+
+(defn cast-fns [table-definition]
+  (map (fn [field]
+         (cond (alphanu-field? field) str/trim
+               (integer-field? field) string->int
+               (decimal-field? field) string->double))
+       (:schema table-definition)))
 
 (defn strip-tildes [text]
   (if-let [match (re-find #"~(.*)~" text)]
@@ -203,6 +208,7 @@
 (defn split-into-fields [line]
   (map strip-tildes
        (-> line
+         (str/replace "^" " ^ ")
          (str/replace "\r" "")
          (str/split #"\^"))))
 
@@ -210,34 +216,40 @@
   (-> (slurp path)
     (str/split #"\n")))
 
-(defn get-field [field-name table-definition]
-  (first (filter #(= field-name
-                     (keyword (:field-name %)))
-    (:schema table-definition))))
+(defn column-names [table-definition]
+  (map (comp keyword :field-name)
+       (:schema table-definition)))
 
-(defn build-row [table-definition line]
-  (let [cols (map (comp keyword :field-name) (:schema table-definition))
-        vals (split-into-fields line) ]
-    (into {} (map
-               (fn [[k v]]
-                 (let [field (get-field k table-definition)]
-                   [k (cond
-                        (integer-field? field) (string->int v)
-                        (alphanu-field? field) v
-                        (decimal-field? field) (string->double v))]))
-               (zipmap cols vals)))))
-
-(defn load-table
-  "Convert a table definition (path to file, fields) into an in-memory table
-  object (list of maps)."
-  [table-definition]
-  (map (partial build-row table-definition)
-       (get-lines (:path table-definition))))
+(defn load-row-values [table-definition]
+  (let [fns (cast-fns table-definition)]
+    (map (fn [line]
+           (->> line
+             (split-into-fields)
+             (map #(%1 %2) fns)))
+         (get-lines (:path table-definition)))))
 
 (defn populate-table [table-definition]
-  (let [rows (load-table table-definition)]
-    (-> (q/table db (:table-name table-definition))
-      (q/conj! rows))))
+  (clojure.contrib.sql/with-connection
+    db (clojure.contrib.sql/transaction
+         (let [cols (column-names table-definition)]
+           (doseq [row-values (load-row-values table-definition)]
+             (clojure.contrib.sql/insert-values
+               (:table-name table-definition) cols row-values))))))
 
-(refresh-database)
-(time (populate-table (first table-definitions)))
+(defn populate-tables [table-definitions]
+  (doseq [table-def table-definitions]
+    (println "Populating table" (:table-name table-def) "...")
+    (time (populate-table table-def))
+    (println "... done.")))
+
+(defn refresh-database []
+  (do
+    (println "Dropping tables...")
+    (drop-tables table-definitions)
+    (println "Creating schema...")
+    (create-tables table-definitions)
+    (println "Populating tables...")
+    (populate-tables table-definitions)))
+
+(defn -main [& args]
+  (refresh-database))
