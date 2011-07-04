@@ -4,7 +4,7 @@ Given natural, physiological, and currently-stocked-kitchen constraints, help th
 
 ## Installation
 
-Requiremenst:
+Requirements:
 
 - [Postgresql 8.4](http://www.postgresql.org/)
 - [Leiningen](https://github.com/technomancy/leiningen)
