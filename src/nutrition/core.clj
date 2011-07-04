@@ -1,8 +1,13 @@
 (ns nutrition.core
-  (:require [nutrition.food-components :as fc])
-  (:require [nutrition.fresh-db :as db])
+  (:require [nutrition.db-def :as db])
+  (:require [clojureql.core :as q])
   (:use [clojure.pprint :only (pprint)])
   (:gen-class))
+
+; ; example: complex-ish cql select
+; @(-> (q/table db :blogs)
+;    (q/select (q/where (> :id 5)))
+;    (q/project [:id :as "myid"]))
 
 (defn sample-carrot-query []
   (let [tables (fc/generate-tables)]

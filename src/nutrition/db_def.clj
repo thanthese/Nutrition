@@ -1,12 +1,17 @@
 ;;
-; Load food-components data from files and provide manipulation methods.
+; Define database invariants: connection info, schema.
 ;
 
-(ns nutrition.food-components
-  (:require [clojure.string :as str]))
+(ns nutrition.db-def)
 
-(def table-definitions
-  [{:table-name :food-description
+(def db {:classname "org.postgresql.Driver"
+         :subprotocol "postgresql"
+         :subname "//localhost:5432/nutrition"
+         :user "test"
+         :password "test"})
+
+(def food-components-schema
+  [{:table-name :food_description
     :path "resources/food-components/FOOD_DES.txt"
     :schema [{ :field-name "NDB_No"      :type "A" :primary? true  :length 5   :precision 0 :blank "N" :description "5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost. "}
              { :field-name "FdGrp_Cd"    :type "A" :primary? false :length 4   :precision 0 :blank "N" :description "4-digit code indicating food group to which a food item belongs. "}
@@ -22,7 +27,7 @@
              { :field-name "Pro_Factor"  :type "N" :primary? false :length 4   :precision 2 :blank "Y" :description "Factor for calculating calories from protein (see p. 11). "}
              { :field-name "Fat_Factor"  :type "N" :primary? false :length 4   :precision 2 :blank "Y" :description "Factor for calculating calories from fat (see p. 11). "}
              { :field-name "CHO_Factor"  :type "N" :primary? false :length 4   :precision 2 :blank "Y" :description "Factor for calculating calories from carbohydrate (see p.  11). "}]}
-   {:table-name :nutrient-data
+   {:table-name :nutrient_data
     :path "resources/food-components/NUT_DATA.txt"
     :schema [{ :field-name "NDB_No"        :type "A" :primary? true  :length 5  :precision 0 :blank "N" :description "5-digit Nutrient Databank number."}
              { :field-name "Nutr_No"       :type "A" :primary? true  :length 3  :precision 0 :blank "N" :description "Unique 3-digit identifier code for a nutrient."}
@@ -41,19 +46,20 @@
              { :field-name "Up_EB"         :type "N" :primary? false :length 10 :precision 3 :blank "Y" :description "Upper 95% error bound."}
              { :field-name "Stat_cmt"      :type "A" :primary? false :length 10 :precision 0 :blank "Y" :description "Statistical comments. See definitions below."}
              { :field-name "CC"            :type "A" :primary? false :length 1  :precision 0 :blank "Y" :description "Confidence Code indicating data quality, based on evaluation of sample plan, sample handling, analytical method, analytical quality control, and number of samples analyzed. Not included in this release, but is planned for future releases."}]}
-   {:table-name :food-group
+   {:table-name :food_group
     :path "resources/food-components/FD_GROUP.txt"
     :schema [{ :field-name "FdGrp_Cd"   :type "A" :primary? true  :length "4"  :precision 0 :blank "N" :description "4-digit code identifying a food group. Only the first 2 digits are currently assigned. In the future, the last 2 digits may be used. Codes may not be consecutive. "}
              { :field-name "FdGrp_Desc" :type "A" :primary? false :length "60" :precision 0 :blank "N" :description "Name of food group. "}]}
-   {:table-name :langual-factor
+   {:table-name :langual_factor
     :path "resources/food-components/LANGUAL.txt"
-    :schema [{ :field-name "NDB_No"      :type "A" :primary? true  :length "5" :precision 0 :blank "N" :description "5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost. "}
+    ; removed primary key status because field value repeats -- pdf spec was wrong
+    :schema [{ :field-name "NDB_No"      :type "A" :primary? false  :length "5" :precision 0 :blank "N" :description "5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost. "}
              { :field-name "Factor_Code" :type "A" :primary? false :length "5" :precision 0 :blank "N" :description "The LanguaL factor from the Thesaurus "}]}
-   {:table-name :langual-description
+   {:table-name :langual_description
     :path "resources/food-components/LANGDESC.txt"
     :schema [{ :field-name "Factor_Code" :type "A" :primary? true  :length "5"   :precision 0 :blank "N" :description "The LanguaL factor from the Thesaurus.  Only those codes used to factor the foods contained in the LanguaL Factor file are included in this file "}
              { :field-name "Description" :type "A" :primary? false :length "140" :precision 0 :blank "N" :description "The description of the LanguaL Factor Code from the thesaurus "}]}
-   {:table-name :nutrient-definition
+   {:table-name :nutrient_definition
     :path "resources/food-components/NUTR_DEF.txt"
     :schema [{ :field-name "Nutr_No"  :type "A" :primary? true  :length "3"  :precision 0 :blank "N" :description "Unique 3-digit identifier code for a nutrient. "}
              { :field-name "Units"    :type "A" :primary? false :length "7"  :precision 0 :blank "N" :description "Units of measure (mg, g, μg, and so on). "}
@@ -61,22 +67,23 @@
              { :field-name "NutrDesc" :type "A" :primary? false :length "60" :precision 0 :blank "N" :description "Name of nutrient/food component. "}
              { :field-name "Num_Dec"  :type "A" :primary? false :length "1"  :precision 0 :blank "N" :description "Number of decimal places to which a nutrient value is rounded. "}
              { :field-name "SR_Order" :type "N" :primary? false :length "6"  :precision 0 :blank "N" :description "Used to sort nutrient records in the same order as various reports produced from SR. "}]}
-   {:table-name :source-code
+   {:table-name :source_code
     :path "resources/food-components/SRC_CD.txt"
     :schema [{ :field-name "Src_Cd"     :type "A" :primary? true  :length "2"  :precision 0 :blank "N" :description "2-digit code. "}
              { :field-name "SrcCd_Desc" :type "A" :primary? false :length "60" :precision 0 :blank "N" :description "Description of source code that identifies the type of nutrient data. "}]}
-   {:table-name :data-derivation
+   {:table-name :data_derivation
     :path "resources/food-components/DERIV_CD.txt"
     :schema [{ :field-name "Deriv_Cd"   :type "A" :primary? true  :length "4"   :precision 0 :blank "N" :description "Derivation Code. "}
              { :field-name "Deriv_Desc" :type "A" :primary? false :length "120" :precision 0 :blank "N" :description "Description of derivation code giving specific information on how the value was determined. "}]}
-   {:table-name :weight-file
+   {:table-name :weight_file
     :path "resources/food-components/WEIGHT.txt"
     :schema [{ :field-name "NDB_No"       :type "A" :primary? true  :length "5"  :precision 0 :blank "N" :description "5-digit Nutrient Databank number. "}
              { :field-name "Seq"          :type "A" :primary? true  :length "2"  :precision 0 :blank "N" :description "Sequence number. "}
              { :field-name "Amount"       :type "N" :primary? false :length "5"  :precision 3 :blank "N" :description "Unit modifier (for example, 1 in “1 cup”). "}
              { :field-name "Msre_Desc"    :type "A" :primary? false :length "80" :precision 0 :blank "N" :description "Description (for example, cup, diced, and 1-inch pieces). "}
              { :field-name "Gm_Wgt"       :type "N" :primary? false :length "7"  :precision 1 :blank "N" :description "Gram weight. "}
-             { :field-name "Num_Data_Pts" :type "N" :primary? false :length "3"  :precision 0 :blank "Y" :description "Number of data points. "}
+             ; upped length and precision to reflect data
+             { :field-name "Num_Data_Pts" :type "N" :primary? false :length "4"  :precision 1 :blank "Y" :description "Number of data points. "}
              { :field-name "Std_Dev"      :type "N" :primary? false :length "7"  :precision 3 :blank "Y" :description "Standard deviation. "}]}
    {:table-name :footnote
     :path "resources/food-components/FOOTNOTE.txt"
@@ -85,12 +92,12 @@
              { :field-name "Footnt_Typ" :type "A" :primary? false :length "1"   :precision 0 :blank "N" :description "Type of footnote                                                                                                                                              :D = footnote adding information to the food  description;  M = footnote adding information to measure description;  N = footnote providing additional information on a nutrient value. If the Footnt_typ = N, the Nutr_No will also be filled in. "}
              { :field-name "Nutr_No"    :type "A" :primary? false :length "3"   :precision 0 :blank "Y" :description "Unique 3-digit identifier code for a nutrient to which footnote applies. "}
              { :field-name "Footnt_Txt" :type "A" :primary? false :length "200" :precision 0 :blank "N" :description "Footnote text. "}]}
-   {:table-name :data-source-link
+   {:table-name :data_source_link
     :path "resources/food-components/DATSRCLN.txt"
     :schema [{ :field-name "NDB_No"     :type "A" :primary? true :length "5" :precision 0 :blank "N" :description "5-digit Nutrient Databank number. "}
              { :field-name "Nutr_No"    :type "A" :primary? true :length "3" :precision 0 :blank "N" :description "Unique 3-digit identifier code for a nutrient. "}
              { :field-name "DataSrc_ID" :type "A" :primary? true :length "6" :precision 0 :blank "N" :description "Unique ID identifying the reference/source.  "}]}
-   {:table-name :data-sources
+   {:table-name :data_sources
     :path "resources/food-components/DATA_SRC.txt"
     :schema [{ :field-name "DataSrc_ID"  :type "A" :primary? true  :length "6"   :precision 0 :blank "N" :description "Unique number identifying the reference/source.  "}
              { :field-name "Authors"     :type "A" :primary? false :length "255" :precision 0 :blank "Y" :description "List of authors for a journal article or name of sponsoring organization for other documents. "}
@@ -101,44 +108,3 @@
              { :field-name "Issue_State" :type "A" :primary? false :length "5"   :precision 0 :blank "Y" :description "Issue number for journal article; State where the sponsoring organization is located. "}
              { :field-name "Start_Page"  :type "A" :primary? false :length "5"   :precision 0 :blank "Y" :description "Starting page number of article/document. "}
              { :field-name "End_Page"    :type "A" :primary? false :length "5"   :precision 0 :blank "Y" :description "Ending page number of article/document. "}]}])
-
-(defn strip-tildes
-  "Strip surrounding tildes from Text, if a pair exists."
-  [text]
-  (if-let [match (re-find #"~(.*)~" text)]
-    (second match)
-    text))
-
-(defn split-row
-  "Split a rows from the raw datasets into a vector of fields."
-  [row]
-  (map strip-tildes (str/split row #"\^")))
-
-(defn get-lines
-  "Return lines from given file as vector of strings."
-  [path]
-  (str/split (slurp path) #"\n"))
-
-(defn load-table
-  "Convert a table definition (path to file, fields) into an in-memory table
-  object (list of maps)."
-  [{:keys [path schema] :as table-definition}]
-  (let [rows (get-lines path)
-        col-names (map (comp keyword :field-name) schema)]
-    (map #(zipmap col-names (split-row %))
-         rows)))
-
-(defn generate-tables
-  "Load all tables into memory as a map: table name to list of rows.  Expensive
-  operation."
-  []
-  (into {}
-        (map (fn [td]
-               [(:table-name td)
-                (load-table td)])
-             table-definitions)))
-
-(defn extract
-  "Return field values for each row in table."
-  [fields table]
-  (map (apply juxt fields) table))
