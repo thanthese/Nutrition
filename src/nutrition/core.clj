@@ -1,19 +1,32 @@
 (ns nutrition.core
   (:use [clojure.pprint :only (pprint)])
-  (:require [clojureql.core :as q])
+  (:require [clojure.string :as str])
+  ;(:require [clojureql.core :as q])
+  (:require [clojure.contrib.sql :as sql])
   (:require [nutrition.db-def :as db])
   (:gen-class))
 
-; example: complex-ish cql select
-(defn short-desc [id-str]
-  (let [result @(-> (q/table db/db :food_description)
-                  (q/select (q/where (= :ndb_no id-str)))
-                  (q/project [:shrt_desc :as "short_description"]))]
-    (:short_description (first result))))
+(defn query [select-stmt]
+  (sql/with-connection
+    db/db
+    (sql/with-query-results
+      rs [select-stmt]
+      (doall rs))))
+
+(defn pretty-table [results]
+  (do
+    (doseq [row results]
+      (println (interpose "|"(vals row))))
+    (print "Total: ")
+    (count results)))
+
+(defn search-desc [search-term]
+  (query (format "select NDB_No, Long_Desc
+                 from food_description
+                 where lower(Long_Desc) like '%%%s%%'"
+                 (str/lower-case search-term))))
 
 (defn -main [& args]
   (do
-    (println "Today's nutrition suggestion: eat food.")
-    (let [id "01001"]
-      (println "Short desc of id" id "is" (short-desc id)))
-    (println "fin.")))
+    (println "Show me the carrots!")
+    (pretty-table (search-desc "carrot"))))
