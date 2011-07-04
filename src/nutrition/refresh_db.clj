@@ -52,14 +52,14 @@
   (let [table-name (:table-name table-definition)]
     (sql/with-connection
       db/db (try
-           (sql/drop-table table-name)
-           (catch Exception _
-             (println " WARN: No table, cannot drop" table-name))))))
+              (sql/drop-table table-name)
+              (catch Exception _
+                (println " WARN: No table, cannot drop" table-name))))))
 
 (defn create-table [table-definition]
   (sql/with-connection
     db/db (apply (partial sql/create-table (:table-name table-definition))
-              (fields+contraints-def table-definition))))
+                 (fields+contraints-def table-definition))))
 
 (defn drop-tables [table-definitions]
   (doseq [table-def table-definitions]
@@ -88,12 +88,12 @@
        (:schema table-definition)))
 
 (defn strip-tildes [text]
-  (if-let [match (re-find #"~(.*)~" text)]
+  (if-let [match (re-find #"^~(.*)~$" text)]
     (last match)
     text))
 
 (defn split-into-fields [line]
-  (map (comp str/trim strip-tildes)
+  (map (comp strip-tildes str/trim)
        (-> line
          (str/replace "^" " ^ ")
          (str/replace "\r" "")
@@ -104,17 +104,18 @@
     (str/split #"\n")))
 
 (defn load-row-values [table-definition]
-  (map (fn [line]
-         (->> line
-           (split-into-fields)
-           (map #(%1 %2) (cast-fns table-definition))))
-       (get-lines (:path table-definition))))
+  (let [fns (cast-fns table-definition)]
+    (map (fn [line]
+           (->> line
+             (split-into-fields)
+             (map #(%1 %2) fns)))
+         (get-lines (:path table-definition)))))
 
 (defn populate-table [table-definition]
   (clojure.contrib.sql/with-connection
     db/db (count (apply (partial clojure.contrib.sql/insert-rows
-                              (:table-name table-definition))
-                     (load-row-values table-definition)))))
+                                 (:table-name table-definition))
+                        (load-row-values table-definition)))))
 
 (defn populate-tables [table-definitions]
   (doseq [table-def table-definitions]
