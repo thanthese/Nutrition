@@ -26,7 +26,7 @@
                    and lower(food.Long_Desc) like '%%%s%%'"
                  (str/lower-case search-term))))
 
-(defn food-nutrients [ndb_no]
+(defn food-nutrients-list [ndb-no]
   (query (format "select data.nutr_val,
                    def.units, def.nutrdesc
                  from nutrient_data as data, nutrient_definition as def
@@ -34,11 +34,42 @@
                    and data.ndb_no = '%s'
                    and data.nutr_val > 0
                  order by data.nutr_val"
-                 ndb_no)))
+                 ndb-no)))
+
+(defn food-nutrients-map
+  "Transforms nutrients list into a single map:
+      Before: [{nutrdesc units  nutr_val}]
+      After:  {{nutrdesc units} nutr_val}}
+  This makes merging different nutrient maps easier."
+  [food-nutrients-list]
+  (reduce (fn [acc {:keys [nutrdesc units nutr_val]}]
+            (assoc acc {:nutrdesc nutrdesc
+                        :units units}
+                   nutr_val))
+          {}
+          food-nutrients-list))
+
+(defn food-nutrients [& ndb-nos]
+  (apply (partial merge-with +)
+         (map (comp food-nutrients-map food-nutrients-list)
+              ndb-nos)))
+
+(def carrot "11124")
+(def squash "11953")
+(def egg "01129")
+(def protein {:nutrdesc "Protein", :units "g"})
 
 (defn -main [& args]
   (do
-    (println "Show me the carrots!")
+    (println "Show types of carrot!")
     (pretty-table (search-term "carrot"))
-    (println "Show me what's in 100g of raw carrots!")
-    (pretty-table (food-nutrients "11124"))))
+    (println "Show me what's in 100g of raw carrot!")
+    (pprint (food-nutrients carrot))
+    (println "Protein in 100g carrot:"
+             ((food-nutrients carrot) protein))
+    (println "Protein in 100g squash:"
+             ((food-nutrients squash) protein))
+    (println "Protein in 100g carrot + 100g squash:"
+             ((food-nutrients carrot squash) protein))
+    (println "Protein in 100g each of carrot + squash + egg:"
+             ((food-nutrients carrot squash egg) protein))))
