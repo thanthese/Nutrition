@@ -37,22 +37,22 @@
                  ndb-no)))
 
 (defn food-nutrients-map
-  "Transforms nutrients list into a single map:
-      Before: [{nutrdesc units  nutr_val}]
-      After:  {{nutrdesc units} nutr_val}}
-  This makes merging different nutrient maps easier."
+  "Transforms nutrients list into a single map. This makes merging different
+  nutrient maps easier."
   [food-nutrients-list]
-  (reduce (fn [acc {:keys [nutrdesc units nutr_val]}]
-            (assoc acc {:nutrdesc nutrdesc
-                        :units units}
-                   nutr_val))
-          {}
-          food-nutrients-list))
+  (apply merge (map (fn [{:keys [nutrdesc units nutr_val]}]
+                      {{:nutrdesc nutrdesc :units units} nutr_val})
+                    food-nutrients-list)))
 
 (defn food-nutrients [& ndb-nos]
   (apply (partial merge-with +)
          (map (comp food-nutrients-map food-nutrients-list)
               ndb-nos)))
+
+(defn scale-nutrients [food-nutrients scale-factor]
+  (apply merge (map (fn [[k v]]
+                      {k (* scale-factor v)})
+                    food-nutrients)))
 
 (def carrot "11124")
 (def squash "11953")
@@ -72,4 +72,9 @@
     (println "Protein in 100g carrot + 100g squash:"
              ((food-nutrients carrot squash) protein))
     (println "Protein in 100g each of carrot + squash + egg:"
-             ((food-nutrients carrot squash egg) protein))))
+             ((food-nutrients carrot squash egg) protein))
+    (println "Protein in 1g, 10g, 100g, 1000g of carrot:"
+             ((scale-nutrients (food-nutrients carrot) 0.01) protein)
+             ((scale-nutrients (food-nutrients carrot) 0.1) protein)
+             ((scale-nutrients (food-nutrients carrot) 1) protein)
+             ((scale-nutrients (food-nutrients carrot) 10) protein))))
