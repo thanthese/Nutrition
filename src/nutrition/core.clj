@@ -11,6 +11,7 @@
 
 (def find-food (comp pretty-search-results q/search-terms))
 (def pick (comp :ndb_no first q/search-terms))
+(def show (comp pprint q/food-nutrients pick))
 
 (def carrot (pick "carrot raw"))
 (def squash (pick "squash zucchini baby raw"))
