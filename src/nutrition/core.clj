@@ -15,16 +15,22 @@
 (defn pretty-table [results]
   (do
     (doseq [row results]
-      (println (interpose "|"(vals row))))
+      (println (interpose "|" (vals row))))
     (println "Total: " (count results))))
 
-(defn search-term [search-term]
-  (query (format "select food.NDB_No, grp.fdgrp_desc, food.Long_Desc
-                 from food_description as food,
-                   food_group as grp
-                 where food.fdgrp_cd = grp.fdgrp_cd
-                   and lower(food.Long_Desc) like '%%%s%%'"
-                 (str/lower-case search-term))))
+(defn like-clause [field search-terms]
+  (str/join " and " (map #(str field " like '%" % "%'")
+                         (-> search-terms
+                           (str/lower-case)
+                           (str/replace #"[^a-z ]" "")
+                           (str/split #" ")))))
+
+(defn search-terms [search-terms]
+  (query (str "select food.NDB_No, grp.fdgrp_desc, food.Long_Desc
+              from food_description as food,
+                food_group as grp
+              where food.fdgrp_cd = grp.fdgrp_cd
+                and " (like-clause "lower(food.Long_Desc)" search-terms))))
 
 (defn food-nutrients-list [ndb-no]
   (query (format "select data.nutr_val,
@@ -49,10 +55,13 @@
          (map (comp food-nutrients-map food-nutrients-list)
               ndb-nos)))
 
-(defn scale-nutrients [food-nutrients scale-factor]
+(defn fmap [f m]
   (apply merge (map (fn [[k v]]
-                      {k (* scale-factor v)})
-                    food-nutrients)))
+                      {k (f v)})
+                    m)))
+
+(defn scale-nutrients [food-nutrients scale-factor]
+  (fmap (partial * scale-factor) food-nutrients))
 
 (def carrot "11124")
 (def squash "11953")
@@ -62,7 +71,9 @@
 (defn -main [& args]
   (do
     (println "Show types of carrot!")
-    (pretty-table (search-term "carrot"))
+    (pretty-table (search-terms "carrot"))
+    (println "Show types of raw carrots!")
+    (pretty-table (search-terms "raw carrot"))
     (println "Show me what's in 100g of raw carrot!")
     (pprint (food-nutrients carrot))
     (println "Protein in 100g carrot:"
