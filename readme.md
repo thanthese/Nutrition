@@ -13,11 +13,17 @@ Setup db:
 
     $> createdb nutrition
     $> createuser --pwprompt test  # make password "test"
-    $> lein run -m nutrition.refresh-db  # populate database
+    $> lein run -m nutrition.refresh-db  # to populate database
 
 ## Usage
 
+To run:
+
     $> lein run
+
+To run tests:
+
+    $> lein test
 
 ## License
 
