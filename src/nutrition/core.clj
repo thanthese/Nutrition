@@ -3,23 +3,27 @@
   (:require [nutrition.query :as q])
   (:gen-class))
 
-(defn pretty-table [results]
+(defn pretty-search-results [results]
   (do
     (doseq [row results]
       (println (interpose "|" (vals row))))
     (println "Total: " (count results))))
 
-(def carrot "11124")
-(def squash "11953")
-(def egg "01129")
+(def find-food (comp pretty-search-results q/search-terms))
+(def pick (comp :ndb_no first q/search-terms))
+
+(def carrot (pick "carrot raw"))
+(def squash (pick "squash zucchini baby raw"))
+(def egg (pick "whole egg boiled"))
+
 (def protein {:nutrdesc "Protein", :units "g"})
 
 (defn -main [& args]
   (do
     (println "Show types of carrot!")
-    (pretty-table (q/search-terms "carrot"))
+    (pretty-search-results (q/search-terms "carrot"))
     (println "Show types of raw carrots!")
-    (pretty-table (q/search-terms "raw carrot"))
+    (pretty-search-results (q/search-terms "raw carrot"))
     (println "Show me what's in 100g of raw carrot!")
     (pprint (q/food-nutrients carrot))
     (println "Protein in 100g carrot:"
@@ -35,3 +39,8 @@
              ((q/scale-nutrients (q/food-nutrients carrot) 0.1) protein)
              ((q/scale-nutrients (q/food-nutrients carrot) 1) protein)
              ((q/scale-nutrients (q/food-nutrients carrot) 10) protein))))
+
+
+(pprint (q/food-nutrients (pick "english walnut")))
+
+
