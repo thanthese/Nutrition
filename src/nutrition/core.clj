@@ -39,8 +39,3 @@
              ((q/scale-nutrients (q/food-nutrients carrot) 0.1) protein)
              ((q/scale-nutrients (q/food-nutrients carrot) 1) protein)
              ((q/scale-nutrients (q/food-nutrients carrot) 10) protein))))
-
-
-(pprint (q/food-nutrients (pick "english walnut")))
-
-
