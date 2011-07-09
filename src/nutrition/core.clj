@@ -1,6 +1,7 @@
 (ns nutrition.core
   (:use [clojure.pprint :only (pprint)])
   (:require [nutrition.query :as q])
+  (:require [nutrition.ideal-diet :as i])
   (:gen-class))
 
 (defn pretty-search-results [results]
