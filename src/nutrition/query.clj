@@ -1,7 +1,8 @@
 (ns nutrition.query
   (:require [clojure.string :as str])
   (:require [clojure.contrib.sql :as sql])
-  (:require [nutrition.db-def :as db]))
+  (:require [nutrition.db-def :as db] )
+  (:require [nutrition.ideal-diet :as i]))
 
 (defn- query [select-stmt]
   (sql/with-connection db/db
@@ -50,3 +51,19 @@
       (list->map)
       (apply merge-with +)
       (map->list))))
+
+(defn nutrient [nutrdesc food-nutrients]
+  (first (filter #(= (:nutrdesc %) nutrdesc)
+                 food-nutrients)))
+
+(defn score-recipe [recipe ideal]
+  (map (fn [ideal-nutrient]
+         (let [recipe-nutrient (nutrient (:nutrdesc ideal-nutrient) recipe)]
+           (-> ideal-nutrient
+             (assoc :percent
+                    (* 100 (/ (:nutr_val recipe-nutrient)
+                              (:nutr_val ideal-nutrient))))
+             (assoc :recipe_val (:nutr_val recipe-nutrient))
+             (assoc :ideal_val (:nutr_val ideal-nutrient))
+             (dissoc :nutr_val))))
+       ideal))

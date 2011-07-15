@@ -10,6 +10,14 @@
       (println (interpose "|" (vals row))))
     (println "Total: " (count results))))
 
+(defn pretty-score [score]
+  (doseq [nutrient-type [:macronutrients :minerals :vitamins]]
+    (println nutrient-type)
+    (doseq [row (->> score
+                  (filter #(= (:category %) nutrient-type))
+                  (sort-by :percent))]
+      (println " " (int (:percent row)) (:nutrdesc row)))))
+
 (def find-food (comp pretty-search-results q/search-results))
 (def pick (comp :ndb_no first q/search-results))
 
@@ -17,13 +25,8 @@
 (def squash (pick "squash zucchini baby raw"))
 (def egg (pick "whole egg boiled"))
 
-(def protein {:nutrdesc "Protein", :units "g"})
-
 (defn -main [& args]
   (do
-    (println "Show types of carrot!")
-    (pretty-search-results (q/search-results "carrot"))
-    (println "Show types of raw carrots!")
-    (pretty-search-results (q/search-results "raw carrot"))
-    (println "Show me what's in a recipe of 100g each of carrot, squash, and egg!")
-    (pprint (q/recipe carrot 100 squash 100 egg 100))))
+    (println "Nurition for recipe: 100g carrot, 100g egg")
+    (pretty-score (q/score-recipe (q/recipe carrot 100 egg 100)
+                                  i/active-male-ideal))))
