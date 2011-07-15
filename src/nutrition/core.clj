@@ -16,7 +16,7 @@
     (doseq [row (->> score
                   (filter #(= (:category %) nutrient-type))
                   (sort-by :percent))]
-      (println " " (int (:percent row)) (:nutrdesc row)))))
+      (println " " (int (:percent row)) "% " (:nutrdesc row)))))
 
 (def find-food (comp pretty-search-results q/search-results))
 (def pick (comp :ndb_no first q/search-results))
@@ -24,9 +24,10 @@
 (def carrot (pick "carrot raw"))
 (def squash (pick "squash zucchini baby raw"))
 (def egg (pick "whole egg boiled"))
+(def oil (pick "olive oil"))
 
 (defn -main [& args]
   (do
-    (println "Nurition for recipe: 100g carrot, 100g egg")
-    (pretty-score (q/score-recipe (q/recipe carrot 100 egg 100)
+    (println "Nurition for recipe: 100g carrot, 100g egg, 100g oil")
+    (pretty-score (q/score-recipe (q/recipe carrot 100 egg 100 oil 100)
                                   i/active-male-ideal))))

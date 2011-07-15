@@ -25,6 +25,7 @@
   (query (str "select def.nutrdesc, def.units, data.nutr_val
               from nutrient_data as data, nutrient_definition as def
               where data.nutr_no = def.nutr_no
+              and def.units <> 'kJ'
               and data.ndb_no = '" ndb-no "'")))
 
 (defn- scale-nutrients [food-nutrients scale-factor]
@@ -58,12 +59,13 @@
 
 (defn score-recipe [recipe ideal]
   (map (fn [ideal-nutrient]
-         (let [recipe-nutrient (nutrient (:nutrdesc ideal-nutrient) recipe)]
+         (let [recipe-nutrient (nutrient (:nutrdesc ideal-nutrient) recipe)
+               recipe-nutrient-val (or (:nutr_val recipe-nutrient) 0)]
            (-> ideal-nutrient
              (assoc :percent
-                    (* 100 (/ (:nutr_val recipe-nutrient)
+                    (* 100 (/ recipe-nutrient-val
                               (:nutr_val ideal-nutrient))))
-             (assoc :recipe_val (:nutr_val recipe-nutrient))
+             (assoc :recipe_val recipe-nutrient-val)
              (assoc :ideal_val (:nutr_val ideal-nutrient))
              (dissoc :nutr_val))))
        ideal))
