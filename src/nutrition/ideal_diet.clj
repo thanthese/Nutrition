@@ -1,116 +1,41 @@
 (ns nutrition.ideal-diet)
 
-(def combined
-  {:macronutrients
-   {{:nutrdesc "** alpha-linolenic acid" :units "g"   } 1.6
-    ;{:nutrdesc "** alpha-linolenic acid" :units "mg"  } 1600
-    {:nutrdesc "** linoleic acid"        :units "g"   } 17
-    ;{:nutrdesc "** linoleic acid"        :units "mg"  } 17000
-    {:nutrdesc "Carbohydrate"            :units "g"   } 130
-    {:nutrdesc "Cholesterol"             :units "mg"  } 100
-    ;{:nutrdesc "Fiber"                   :units "g"   } 34
-    {:nutrdesc "Fiber"                   :units "g"   } 38
-    ;{:nutrdesc "Protein"                 :units "g"   } 55
-    {:nutrdesc "Protein"                 :units "g"   } 57}
-   :minerals
-   {{:nutrdesc "Calcium"                 :units "mg"  } 1000
-    {:nutrdesc "Chromium"                :units "mcg" } 35
-    ;{:nutrdesc "Copper"                  :units "mcg" } 900
-    {:nutrdesc "Copper"                  :units "mg"  } 0.9
-    {:nutrdesc "Flouride"                :units "mg"  } 4
-    {:nutrdesc "Iodine"                  :units "mcg" } 150
-    ;{:nutrdesc "Iron"                    :units "mg"  } 8
-    {:nutrdesc "Iron"                    :units "mg"  } 18
-    {:nutrdesc "Magnesium"               :units "mg"  } 400
-    {:nutrdesc "Manganese"               :units "mg"  } 2.3
-    {:nutrdesc "Molybdenum"              :units "mcg" } 45
-    {:nutrdesc "Phosphorus"              :units "mg"  } 700
-    {:nutrdesc "Potassium"               :units "mg"  } 4700
-    {:nutrdesc "Selenium"                :units "mcg" } 55
-    {:nutrdesc "Sodium"                  :units "mg"  } 1000
-    {:nutrdesc "Zinc"                    :units "mg"  } 11}
-   :vitamins
-   {{:nutrdesc "Biotin"                  :units "mcg" } 30
-    {:nutrdesc "Choline"                 :units "mg"  } 550
-    {:nutrdesc "Folate"                  :units "mcg" } 400
-    {:nutrdesc "Niacin"                  :units "mg"  } 16
-    {:nutrdesc "Pantothenic Acid"        :units "mg"  } 5
-    {:nutrdesc "Riboflavin"              :units "mg"  } 1.3
-    {:nutrdesc "Thiamin"                 :units "mg"  } 1.2
-    {:nutrdesc "Vitamin A"               :units "IU"  } 3000
-    ;{:nutrdesc "Vitamin A"               :units "mcg" } 900
-    {:nutrdesc "Vitamin B12"             :units "mcg" } 2.4
-    {:nutrdesc "Vitamin B6"              :units "mg"  } 1.3
-    {:nutrdesc "Vitamin C"               :units "mg"  } 90
-    {:nutrdesc "Vitamin D"               :units "IU"  } 200
-    ;{:nutrdesc "Vitamin D"               :units "mcg" } 15
-    {:nutrdesc "Vitamin E"               :units "mg"  } 15
-    {:nutrdesc "Vitamin K"               :units "mcg" } 120}})
+;;;;
+;; Nutrients on which the food-components data are silent:
+;; - Molybdenum
+;; - Biotin
+;; - Iodine
+;; - Chromium
+;;
 
-(def dietary-guidelines
-  {:macronutrients
-   {{:nutrdesc "** alpha-linolenic acid" :units "g"   } 1.6
-    {:nutrdesc "** linoleic acid"        :units "g"   } 17
-    {:nutrdesc "Carbohydrate"            :units "g"   } 130
-    {:nutrdesc "Cholesterol"             :units "mg"  } 100
-    {:nutrdesc "Fiber"                   :units "g"   } 34
-    {:nutrdesc "Protein"                 :units "g"   } 55}
-   :minerals
-   {{:nutrdesc "Calcium"                 :units "mg"  } 1000
-    {:nutrdesc "Copper"                  :units "mcg" } 900
-    {:nutrdesc "Iron"                    :units "mg"  } 18
-    {:nutrdesc "Magnesium"               :units "mg"  } 400
-    {:nutrdesc "Phosphorus"              :units "mg"  } 700
-    {:nutrdesc "Potassium"               :units "mg"  } 4700
-    {:nutrdesc "Selenium"                :units "mcg" } 55
-    {:nutrdesc "Sodium"                  :units "mg"  } 1000
-    {:nutrdesc "Zinc"                    :units "mg"  } 11}
-   :vitamins
-   {{:nutrdesc "Choline"                 :units "mg"  } 550
-    {:nutrdesc "Folate"                  :units "mcg" } 400
-    {:nutrdesc "Niacin"                  :units "mg"  } 16
-    {:nutrdesc "Riboflavin"              :units "mg"  } 1.3
-    {:nutrdesc "Thiamin"                 :units "mg"  } 1.2
-    {:nutrdesc "Vitamin A"               :units "mcg" } 900
-    {:nutrdesc "Vitamin B12"             :units "mcg" } 2.4
-    {:nutrdesc "Vitamin B6"              :units "mg"  } 1.3
-    {:nutrdesc "Vitamin C"               :units "mg"  } 90
-    {:nutrdesc "Vitamin Dh"              :units "mcg" } 15
-    {:nutrdesc "Vitamin E"               :units "mg"  } 15
-    {:nutrdesc "Vitamin K"               :units "mcg" } 120}})
-
-(def self
-  {:macronutrients
-   {{:nutrdesc "** alpha-linolenic acid" :units "mg"  } 1600.0
-    {:nutrdesc "** linoleic acid"        :units "mg"  } 17000.0
-    {:nutrdesc "Carbohydrate"            :units "g"   } 130.0
-    {:nutrdesc "Fiber"                   :units "g"   } 38.0
-    {:nutrdesc "Protein"                 :units "g"   } 57}
-   :minerals
-   {{:nutrdesc "Calcium"                 :units "mg"  } 1000.0
-    {:nutrdesc "Chromium"                :units "mcg" } 35.0
-    {:nutrdesc "Copper"                  :units "mg"  } 0.9
-    {:nutrdesc "Flouride"                :units "mg"  } 4.0
-    {:nutrdesc "Iodine"                  :units "mcg" } 150.0
-    {:nutrdesc "Iron"                    :units "mg"  } 8.0
-    {:nutrdesc "Magnesium"               :units "mg"  } 400.0
-    {:nutrdesc "Manganese"               :units "mg"  } 2.3
-    {:nutrdesc "Molybdenum"              :units "mcg" } 45.0
-    {:nutrdesc "Phosphorus"              :units "mg"  } 700.0
-    {:nutrdesc "Selenium"                :units "mcg" } 55.0
-    {:nutrdesc "Zinc"                    :units "mg"  } 11.0}
-   :vitamins
-   {{:nutrdesc "Biotin"                  :units "mcg" } 30.0
-    {:nutrdesc "Choline"                 :units "mg"  } 550.0
-    {:nutrdesc "Folate"                  :units "mcg" } 400.0
-    {:nutrdesc "Niacin"                  :units "mg"  } 16.0
-    {:nutrdesc "Pantothenic Acid"        :units "mg"  } 5.0
-    {:nutrdesc "Riboflavin"              :units "mg"  } 1.3
-    {:nutrdesc "Thiamin"                 :units "mg"  } 1.2
-    {:nutrdesc "Vitamin A"               :units "IU"  } 3000.0
-    {:nutrdesc "Vitamin B12"             :units "mcg" } 2.4
-    {:nutrdesc "Vitamin B6"              :units "mg"  } 1.3
-    {:nutrdesc "Vitamin C"               :units "mg"  } 90.0
-    {:nutrdesc "Vitamin D"               :units "IU"  } 200.0
-    {:nutrdesc "Vitamin E"               :units "mg"  } 15.0
-    {:nutrdesc "Vitamin K"               :units "mcg" } 120.0}})
+(def ideal
+  [{:nutrdesc "18:3 undifferentiated"          :units   "g" :amount    1.6 :category :macronutrients}
+   {:nutrdesc "18:2 undifferentiated"          :units   "g" :amount   17   :category :macronutrients}
+   {:nutrdesc "Carbohydrate, by difference"    :units   "g" :amount  130   :category :macronutrients}
+   {:nutrdesc "Cholesterol"                    :units  "mg" :amount  100   :category :macronutrients}
+   {:nutrdesc "Fiber, total dietary"           :units   "g" :amount   38   :category :macronutrients}
+   {:nutrdesc "Protein"                        :units   "g" :amount   57   :category :macronutrients}
+   {:nutrdesc "Calcium, Ca"                    :units  "mg" :amount 1000   :category :minerals}
+   {:nutrdesc "Copper, Cu"                     :units  "mg" :amount    0.9 :category :minerals}
+   {:nutrdesc "Fluoride, F"                    :units "mcg" :amount 4000   :category :minerals}
+   {:nutrdesc "Iron, Fe"                       :units  "mg" :amount   18   :category :minerals}
+   {:nutrdesc "Magnesium, Mg"                  :units  "mg" :amount  400   :category :minerals}
+   {:nutrdesc "Manganese, Mn"                  :units  "mg" :amount    2.3 :category :minerals}
+   {:nutrdesc "Phosphorus, P"                  :units  "mg" :amount  700   :category :minerals}
+   {:nutrdesc "Potassium, K"                   :units  "mg" :amount 4700   :category :minerals}
+   {:nutrdesc "Selenium, Se"                   :units "mcg" :amount   55   :category :minerals}
+   {:nutrdesc "Sodium, Na"                     :units  "mg" :amount 1000   :category :minerals}
+   {:nutrdesc "Zinc, Zn"                       :units  "mg" :amount   11   :category :minerals}
+   {:nutrdesc "Choline, total"                 :units  "mg" :amount  550   :category :vitamins}
+   {:nutrdesc "Folate, total"                  :units "mcg" :amount  400   :category :vitamins}
+   {:nutrdesc "Niacin"                         :units  "mg" :amount   16   :category :vitamins}
+   {:nutrdesc "Pantothenic acid"               :units  "mg" :amount    5   :category :vitamins}
+   {:nutrdesc "Riboflavin"                     :units  "mg" :amount    1.3 :category :vitamins}
+   {:nutrdesc "Thiamin"                        :units  "mg" :amount    1.2 :category :vitamins}
+   {:nutrdesc "Vitamin A, IU"                  :units  "IU" :amount 3000   :category :vitamins}
+   {:nutrdesc "Vitamin B-12"                   :units "mcg" :amount    2.4 :category :vitamins}
+   {:nutrdesc "Vitamin B-6"                    :units  "mg" :amount    1.3 :category :vitamins}
+   {:nutrdesc "Vitamin C, total ascorbic acid" :units  "mg" :amount   90   :category :vitamins}
+   {:nutrdesc "Vitamin D"                      :units  "IU" :amount  200   :category :vitamins}
+   {:nutrdesc "Vitamin E (alpha-tocopherol)"   :units  "mg" :amount   15   :category :vitamins}
+   {:nutrdesc "Vitamin K (phylloquinone)"      :units "mcg" :amount  120   :category :vitamins}])

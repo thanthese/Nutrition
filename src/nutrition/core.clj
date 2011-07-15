@@ -10,9 +10,8 @@
       (println (interpose "|" (vals row))))
     (println "Total: " (count results))))
 
-(def find-food (comp pretty-search-results q/search-terms))
-(def pick (comp :ndb_no first q/search-terms))
-(def show (comp pprint q/food-nutrients pick))
+(def find-food (comp pretty-search-results q/search-results))
+(def pick (comp :ndb_no first q/search-results))
 
 (def carrot (pick "carrot raw"))
 (def squash (pick "squash zucchini baby raw"))
@@ -23,21 +22,8 @@
 (defn -main [& args]
   (do
     (println "Show types of carrot!")
-    (pretty-search-results (q/search-terms "carrot"))
+    (pretty-search-results (q/search-results "carrot"))
     (println "Show types of raw carrots!")
-    (pretty-search-results (q/search-terms "raw carrot"))
-    (println "Show me what's in 100g of raw carrot!")
-    (pprint (q/food-nutrients carrot))
-    (println "Protein in 100g carrot:"
-             ((q/food-nutrients carrot) protein))
-    (println "Protein in 100g squash:"
-             ((q/food-nutrients squash) protein))
-    (println "Protein in 100g carrot + 100g squash:"
-             ((q/food-nutrients carrot squash) protein))
-    (println "Protein in 100g each of carrot + squash + egg:"
-             ((q/food-nutrients carrot squash egg) protein))
-    (println "Protein in 1g, 10g, 100g, 1000g of carrot:"
-             ((q/scale-nutrients (q/food-nutrients carrot) 0.01) protein)
-             ((q/scale-nutrients (q/food-nutrients carrot) 0.1) protein)
-             ((q/scale-nutrients (q/food-nutrients carrot) 1) protein)
-             ((q/scale-nutrients (q/food-nutrients carrot) 10) protein))))
+    (pretty-search-results (q/search-results "raw carrot"))
+    (println "Show me what's in a recipe of 100g each of carrot, squash, and egg!")
+    (pprint (q/recipe carrot 100 squash 100 egg 100))))

@@ -4,53 +4,49 @@
   (:require [nutrition.db-def :as db]))
 
 (defn- query [select-stmt]
-  (sql/with-connection
-    db/db
-    (sql/with-query-results
-      rs [select-stmt]
-      (doall rs))))
+  (sql/with-connection db/db
+                       (sql/with-query-results rs [select-stmt]
+                                               (doall rs))))
 
-(defn- like-clause [field search-terms]
-  (str/join " and " (map #(str field " like '%" % "%'")
-                         (-> search-terms
-                           (str/lower-case)
-                           (str/replace #"[^a-z ]" "")
-                           (str/split #" ")))))
-
-(defn search-terms [search-terms]
+(defn search-results [search-terms]
   (query (str "select food.NDB_No, grp.fdgrp_desc, food.Long_Desc
-              from food_description as food,
-                food_group as grp
+              from food_description as food, food_group as grp
               where food.fdgrp_cd = grp.fdgrp_cd
-                and " (like-clause "lower(food.Long_Desc)" search-terms))))
+              and "
+              (str/join " and "
+                        (map #(str " lower(food.Long_Desc) like '%" % "%'")
+                             (-> search-terms
+                               (str/lower-case)
+                               (str/replace #"[^a-z ]" "")
+                               (str/split #" ")))))))
 
-(defn- food-nutrients-list [ndb-no]
-  (query (format "select data.nutr_val,
-                   def.units, def.nutrdesc
-                 from nutrient_data as data, nutrient_definition as def
-                 where data.nutr_no = def.nutr_no
-                   and data.ndb_no = '%s'
-                   and data.nutr_val > 0
-                 order by data.nutr_val"
-                 ndb-no)))
+(defn- food-nutrients [ndb-no]
+  (query (str "select def.nutrdesc, def.units, data.nutr_val
+              from nutrient_data as data, nutrient_definition as def
+              where data.nutr_no = def.nutr_no
+              and data.ndb_no = '" ndb-no "'")))
 
-(defn- food-nutrients-map
-  "Transforms nutrients list into a single map. This makes merging different
-  nutrient maps easier."
-  [food-nutrients-list]
-  (apply merge (map (fn [{:keys [nutrdesc units nutr_val]}]
-                      {{:nutrdesc nutrdesc :units units} nutr_val})
-                    food-nutrients-list)))
+(defn- scale-nutrients [food-nutrients scale-factor]
+  (map #(update-in % [:nutr_val] * scale-factor)
+       food-nutrients))
 
-(defn food-nutrients [& ndb-nos]
-  (apply (partial merge-with +)
-         (map (comp food-nutrients-map food-nutrients-list)
-              ndb-nos)))
+(defn- list->map [ls]
+  (map (fn [{:keys [nutrdesc units nutr_val]}]
+         {{:nutrdesc nutrdesc :units units} nutr_val})
+       ls))
 
-(defn- fmap [f m]
-  (apply merge (map (fn [[k v]]
-                      {k (f v)})
-                    m)))
+(defn- map->list [mp]
+  (map (fn [[{:keys [nutrdesc units]} nutr_val]]
+         {:nutrdesc nutrdesc :units units :nutr_val nutr_val})
+       mp))
 
-(defn scale-nutrients [food-nutrients scale-factor]
-  (fmap (partial * scale-factor) food-nutrients))
+(defn recipe [& ndb-nos-and-grams]
+  (let [all-nutrients-list
+        (flatten (map (fn [[ndb-no grams]]
+                        (scale-nutrients (food-nutrients ndb-no)
+                                         (* 0.01 grams)))
+                      (partition 2 ndb-nos-and-grams)))]
+    (->> all-nutrients-list
+      (list->map)
+      (apply merge-with +)
+      (map->list))))
