@@ -21,12 +21,12 @@
                                (str/replace #"[^a-z ]" "")
                                (str/split #" ")))))))
 
-(defn- food-nutrients [ndb-no]
+(def food-nutrients (memoize (fn [ndb-no]
   (query (str "select def.nutrdesc, def.units, data.nutr_val
               from nutrient_data as data, nutrient_definition as def
               where data.nutr_no = def.nutr_no
               and def.units <> 'kJ'
-              and data.ndb_no = '" ndb-no "'")))
+              and data.ndb_no = '" ndb-no "'")))))
 
 (defn- scale-nutrients [food-nutrients scale-factor]
   (map #(update-in % [:nutr_val] * scale-factor)
