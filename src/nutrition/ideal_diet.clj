@@ -6,6 +6,7 @@
 ;; - Biotin
 ;; - Iodine
 ;; - Chromium
+;; - Fluoride (not totally absent, but still terrible)
 ;;
 
 (def active-male-ideal
@@ -18,7 +19,6 @@
    {:nutrdesc "Protein"                        :units    "g" :nutr_val   57   :category :macronutrients}
    {:nutrdesc "Calcium, Ca"                    :units   "mg" :nutr_val 1000   :category :minerals}
    {:nutrdesc "Copper, Cu"                     :units   "mg" :nutr_val    0.9 :category :minerals}
-   {:nutrdesc "Fluoride, F"                    :units  "mcg" :nutr_val 4000   :category :minerals}
    {:nutrdesc "Iron, Fe"                       :units   "mg" :nutr_val   18   :category :minerals}
    {:nutrdesc "Magnesium, Mg"                  :units   "mg" :nutr_val  400   :category :minerals}
    {:nutrdesc "Manganese, Mn"                  :units   "mg" :nutr_val    2.3 :category :minerals}

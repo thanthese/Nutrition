@@ -9,6 +9,16 @@
                        (sql/with-query-results rs [select-stmt]
                                                (doall rs))))
 
+(defn foods-rich-in [nutrdesc]
+  (query (str "select data.nutr_val, food.long_desc
+              from nutrient_data as data,
+              nutrient_definition as def,
+              food_description as food
+              where data.nutr_no = def.nutr_no
+              and food.ndb_no = data.ndb_no
+              and def.nutrdesc = '" nutrdesc
+              "' order by data.nutr_val desc")))
+
 (defn search-results [search-terms]
   (query (str "select food.NDB_No, grp.fdgrp_desc, food.Long_Desc
               from food_description as food, food_group as grp

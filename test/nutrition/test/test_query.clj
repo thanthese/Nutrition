@@ -63,3 +63,10 @@
     (is (=ish? 1  50 (recipe-percent cal eggs-recipe)))
     (is (=ish? 1  28 (recipe-percent pro comb-recipe)))
     (is (=ish? 1  10 (recipe-percent cal comb-recipe)))))
+
+(deftest
+  test-foods-rich-in
+  (is (= (first (q/foods-rich-in "Fluoride, F"))
+         {:nutr_val 584.000M,
+          :long_desc "Tea, instant, sweetened with sugar, lemon-flavored, without added ascorbic acid, powder"})))
+

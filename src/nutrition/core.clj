@@ -42,14 +42,35 @@
 
 (def find-food (comp pretty-search-results q/search-results))
 
+(defn helper-score [& common-name-key-and-grams]
+  (pretty-score
+    (q/score-recipe
+      (apply q/recipe
+             (flatten (map (fn [[ingredient amount]]
+                             [(:ndb_no (ingredient c/common-foods)) amount])
+                           (partition 2 common-name-key-and-grams))))
+      i/active-male-ideal)))
+
 (defn -main [& args]
-  (let [f c/common-foods
-        ingredients [(ndb-no :carrot)
-                     (ndb-no :egg)
-                     (ndb-no :carrot)]
-        winning-branch (apply the-alg/evolve ingredients)]
-    (do
-      (pretty-score (q/score-recipe
-                      (apply q/recipe (flatten (:quantities winning-branch)))
-                      i/active-male-ideal))
-      (pretty-winning-branch winning-branch))))
+  (do
+    (time (let [f c/common-foods
+                ingredients (map :ndb_no (vals c/common-foods))
+                winning-branch (apply the-alg/evolve ingredients)]
+            (do
+              (pretty-score (q/score-recipe
+                              (apply q/recipe (flatten (:quantities winning-branch)))
+                              i/active-male-ideal))
+              (pretty-winning-branch winning-branch))))
+    (println "Sample recipe score:")
+    (helper-score
+      :flaxseed 100
+      :apple 100
+      :banana 100
+      :rice 1000
+      :quinoa 1000
+      :olive-oil 10
+      :spinach 100
+      :broccoli 100
+      :walnut 100
+      :egg 100)))
+
