@@ -19,7 +19,8 @@
                              (-> search-terms
                                (str/lower-case)
                                (str/replace #"[^a-z ]" "")
-                               (str/split #" ")))))))
+                               (str/split #" "))))
+              " order by grp.fdgrp_desc")))
 
 (def food-nutrients (memoize (fn [ndb-no]
   (query (str "select def.nutrdesc, def.units, data.nutr_val
