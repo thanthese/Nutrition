@@ -14,6 +14,7 @@
    :raspberry      {:ndb_no "09302" :fdgrp_desc "Fruits and Fruit Juices"           :long_desc "Raspberries, raw"}
    :peach          {:ndb_no "09236" :fdgrp_desc "Fruits and Fruit Juices"           :long_desc "Peaches, raw"}
    :pear           {:ndb_no "09252" :fdgrp_desc "Fruits and Fruit Juices"           :long_desc "Pears, raw"}
+   :asparagus      {:ndb_no "11012" :fdgrp_desc "Vegetables and Vegetable Products" :long_desc "Asparagus, cooked, boiled, drained"}
    :broccoli       {:ndb_no "11090" :fdgrp_desc "Vegetables and Vegetable Products" :long_desc "Broccoli, raw"}
    :brussel-sprout {:ndb_no "11099" :fdgrp_desc "Vegetables and Vegetable Products" :long_desc "Brussels sprouts, cooked, boiled, drained, without salt"}
    :carrot         {:ndb_no "11124" :fdgrp_desc "Vegetables and Vegetable Products" :long_desc "Carrots, raw"}
