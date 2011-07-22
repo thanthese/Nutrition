@@ -67,7 +67,7 @@
 
 (defn -main [& args]
   (time (let [common-ndb-nos (map :ndb_no (vals c/common-foods))
-              winning-branch (apply the-alg/evolve common-ndb-nos)]
+              winning-branch (apply the-alg/evolve ["01129" "20037" "16043" "11090" "11529" "04053"])]
           (do
             (pretty-score (q/score-recipe
                             (apply q/recipe (flatten (:quantities winning-branch)))

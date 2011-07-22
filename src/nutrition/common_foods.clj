@@ -31,3 +31,4 @@
    :chichpeas      {:ndb_no "16057" :fdgrp_desc "Legumes and Legume Products"       :long_desc "Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, without salt"}
    :rice           {:ndb_no "20037" :fdgrp_desc "Cereal Grains and Pasta"           :long_desc "Rice, brown, long-grain, cooked"}
    :quinoa         {:ndb_no "20137" :fdgrp_desc "Cereal Grains and Pasta"           :long_desc "Quinoa, cooked"}})
+
